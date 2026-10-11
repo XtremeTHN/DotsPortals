@@ -1,0 +1,13 @@
+[package]
+name = "dotsportals"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ashpd = { version = "0.13.13", features = ["backend", "wallpaper"] }
+async-trait = "0.1.92"
+tokio = { version = "1.53.2", features = ["process", "macros"] }
+tracing = { version = "0.1.44" }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+tracing-tree = "0.4.1"
+url = "2.5.8"
