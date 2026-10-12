@@ -5,6 +5,8 @@ use ashpd::{
 use async_trait::async_trait;
 use tokio::process::Command;
 
+use crate::quickshell;
+
 #[derive(Default)]
 pub struct Wallpaper;
 
@@ -46,35 +48,19 @@ impl WallpaperImpl for Wallpaper {
         }
 
         if show_preview {
-            let out = Command::new("qs")
-                .args(&["ipc", "call", "portal", "previewWallpaper", rest])
-                .spawn()
-                .map_err(|e| PortalError::Failed(format!("failed to spawn qs: {}", e)))?
-                .wait_with_output()
-                .await
-                .map_err(|e| PortalError::Failed(format!("failed to wait for qs: {}", e)))?;
-            
-            let stdout = String::from_utf8_lossy(&out.stdout).to_string();
+            quickshell::call("portals-wallpaper", "showPreview", &[uri.as_str(), &set_on.to_string()]).await?;
 
-            if stdout.parse::<bool>().expect("unexpected output") {
-                return Err(PortalError::Cancelled("Request dismissed by the user".into()));
+            let dismissed = quickshell::wait_for_bool_signal("portals-wallpaper", "finished")
+                .await?;
+
+            if dismissed {
+                return Err(PortalError::Cancelled("The user cancelled the request".into()))
             }
+
+            return Ok(())
         }
 
-        let exit_code = Command::new("awww")
-            .arg("img")
-            .arg(rest)
-            .args(&["--transition-type", "center"])
-            .spawn()
-            .map_err(|e| PortalError::Failed(format!("failed to spawn awww: {}", e)))?
-            .wait()
-            .await
-            .map_err(|e| PortalError::Failed(format!("failed to wait for awww: {}", e)))?
-            .code();
-
-        if let Some(code) = exit_code && code != 0 {
-            return Err(PortalError::Failed(format!("awww failed with code: {}", code)));
-        }
+        quickshell::call("portals-wallpaper", "setWallpaper", &[uri.as_str(), &set_on.to_string()]).await?;
 
         Ok(())
     }

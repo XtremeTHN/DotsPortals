@@ -1,0 +1,9 @@
+project(
+  'dots-portals',
+  version: '0.1.0',
+  meson_version: '>= 0.59',
+  license: 'GPL-v3',
+)
+
+subdir('src')
+subdir('data')

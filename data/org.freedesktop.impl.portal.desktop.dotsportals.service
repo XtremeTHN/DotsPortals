@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.freedesktop.impl.portal.desktop.dotsportals
+Exec=/usr/libexec/xdg-desktop-portal-dotsportals
