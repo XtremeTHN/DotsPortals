@@ -1,5 +1,7 @@
 use crate::logger::init_logging;
 
+mod hyprland;
+mod background;
 mod screenshot;
 mod desktop;
 mod quickshell;
