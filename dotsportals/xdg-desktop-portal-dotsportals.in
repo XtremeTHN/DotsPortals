@@ -1,0 +1,11 @@
+#!/usr/bin/env python3
+import sys
+
+PKG_DATA_DIR = "@pkgdatadir@"
+
+sys.path.insert(1, PKG_DATA_DIR)
+
+from dotsportals.main import run
+
+if __name__ == "__main__":
+    run()

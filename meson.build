@@ -1,9 +1,7 @@
 project(
-  'dots-portals',
-  version: '0.1.0',
-  meson_version: '>= 0.59',
-  license: 'GPL-v3',
+  'xdg-desktop-portal-dotsportals',
+  version : '0.1',
+  meson_version : '>= 1.3.0',
 )
 
-subdir('src')
-subdir('data')
+subdir('dotsportals')

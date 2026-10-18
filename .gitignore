@@ -1,1 +1,6 @@
 /target
+installation
+build
+.venv
+.ruff_cache
+__pycache__

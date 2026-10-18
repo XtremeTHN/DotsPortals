@@ -1,0 +1,35 @@
+from pathlib import Path
+
+from gi.repository import Gio, GObject
+
+INTERFACES_PATH = Path("/usr/share/dbus-1/interfaces/")
+
+
+def load_iface(iface: str) -> Gio.DBusNodeInfo:
+    return Gio.DBusNodeInfo.new_for_xml(
+        (INTERFACES_PATH / f"{iface}.xml").read_text()
+    ).lookup_interface(iface)
+
+
+def get_signal_args(flags="run-first", args=()):
+    return (
+        getattr(GObject.SignalFlags, flags.replace("-", "_").upper()),
+        None,
+        tuple(args),
+    )
+
+def exec_with_output(logger: object, cmd: list, callback, cancellable=None):
+    def cb(p: Gio.Subprocess, res):
+        try:
+            (_, stdout, stderr) = p.communicate_finish(res)
+            if p.get_exit_status() > 0:
+                logger.error(f"Failed to communicate with {cmd[0]}")
+                logger.error(f"stderr: {stderr}")
+                logger.error(f"stdout: {stdout}")
+            callback(stdout, None, cancellable)
+        except Exception as e:
+            logger.exception("Failed to finish quickshell call", exc_info=e)
+            callback(None, e, cancellable)
+
+    proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
+    proc.communicate_async(None, cancellable, cb)
