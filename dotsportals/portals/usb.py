@@ -4,6 +4,7 @@ from gi.repository import Gio, GioUnix, GLib
 
 from ..quickshell import call
 from ..service import Property, method
+from ..utils import systemd_unescape
 from .portal import Portal
 
 
@@ -48,8 +49,8 @@ class UsbPortal(Portal):
 
         for id, info, access in devices:
             props = info["properties"]
-            name = props.get("ID_MODEL_ENC", "Unknown")
-            vendor = props.get("ID_VENDOR_FROM_DATABASE", "Unknown vendor")
+            name = systemd_unescape(props.get("ID_MODEL_ENC", "Unknown"))
+            vendor = systemd_unescape(props.get("ID_VENDOR_FROM_DATABASE", "Unknown vendor"))
             writable = access.get("writable", False)
 
             call("portals-usb", "addDevice", name, vendor, str(writable).lower())

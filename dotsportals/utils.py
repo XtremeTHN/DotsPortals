@@ -1,8 +1,8 @@
+import re
 from pathlib import Path
+from typing import Any
 
 from gi.repository import Gio, GLib, GObject
-
-from typing import Any
 
 from .portals.errors import Failed
 
@@ -52,3 +52,12 @@ def ret_variant(invocation: Gio.DBusMethodInvocation, value: Any):
 def return_with_error(invocation: Gio.DBusMethodInvocation, req, error: Exception):
     invocation.return_dbus_error(Failed.name, " ".join(error.args))
     req.finish()
+
+def systemd_unescape(s: str, path: bool = False) -> str:
+    b = s.encode()
+    b = b.replace(b"-", b"/")
+    b = re.sub(rb"\\x([0-9a-fA-F]{2})", lambda m: bytes([int(m[1], 16)]), b)
+    out = b.decode("utf-8", errors="replace")
+    if path and not out.startswith("/"):
+        out = "/" + out
+    return out
