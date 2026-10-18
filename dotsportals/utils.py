@@ -1,6 +1,10 @@
 from pathlib import Path
 
-from gi.repository import Gio, GObject
+from gi.repository import Gio, GLib, GObject
+
+from typing import Any
+
+from .portals.errors import Failed
 
 INTERFACES_PATH = Path("/usr/share/dbus-1/interfaces/")
 
@@ -35,3 +39,16 @@ def exec_with_output(logger: object, cmd: list, callback, cancellable=None):
 
     proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
     proc.communicate_async(None, cancellable, cb)
+
+def variant(sig: str, value: Any):
+    return GLib.Variant(sig, value)
+
+def ret_variant(invocation: Gio.DBusMethodInvocation, value: Any):
+    info = invocation.get_method_info()
+    sig = f"({''.join(a.signature for a in info.out_args)})"
+
+    return variant(sig, value)
+
+def return_with_error(invocation: Gio.DBusMethodInvocation, req, error: Exception):
+    invocation.return_dbus_error(Failed.name, " ".join(error.args))
+    req.finish()
