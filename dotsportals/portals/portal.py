@@ -10,10 +10,10 @@ from .request import RequestFactory
 class Portal(Service):
     NAME: str
 
-    def __init__(self, conn: Gio.DBusConnection):
+    def __init__(self, conn: Gio.DBusConnection, info: Gio.DBusInterfaceInfo):
         self.rq = RequestFactory(self.NAME, conn)
 
-        super().__init__()
+        super().__init__(info)
 
 class DotsPortals(GObject.Object):
     def __init__(self):
@@ -48,7 +48,7 @@ class DotsPortals(GObject.Object):
             self.logger.info(f'Registering portal "{iface}"...')
             info = load_iface(iface)
 
-            p: Portal = portal(conn)
+            p: Portal = portal(conn, info)
             self.portals_instances[iface] = p
 
             conn.register_object(

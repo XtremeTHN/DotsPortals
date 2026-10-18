@@ -6,15 +6,22 @@ from .portals.errors import PortalException
 
 
 class Service:
-    methods: dict
+    methods: dict = {}
+    properties: dict[str, "Property"] = {}
+    info: Gio.DBusInterfaceInfo
+
+    def __init__(self, info):
+        self.info = info
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
-        cls.methods = {
-            name: member
-            for name, member in cls.__dict__.items()
-            if callable(member) and member.__dict__.get("portal_method", False)
-        }
+
+        for name, value in cls.__dict__.items():
+            if callable(value) and value.__dict__.get("portal_method", False):
+                cls.methods[name] = value
+
+            if isinstance(value, Property):
+                cls.properties[name] = value
 
     def method_handler(
         self,
@@ -26,7 +33,7 @@ class Service:
         parameters: GLib.Variant,
         invocation: Gio.DBusMethodInvocation,
     ):
-        self.logger.info(f"Calling \"{method_name}\"")
+        self.logger.info(f'Calling "{method_name}"')
         info = invocation.get_method_info()
         if info is None:
             return
@@ -48,7 +55,7 @@ class Service:
             return
 
         if len(info.out_args) > 0:
-            sig = f"({"".join(a.signature for a in info.out_args)})"
+            sig = f"({''.join(a.signature for a in info.out_args)})"
             invocation.return_value(GLib.Variant(sig, ret_value))
         else:
             invocation.return_value()
@@ -60,7 +67,12 @@ class Service:
         object_path: str,
         interface_name: str,
         property_name: str,
-    ) -> GLib.Variant: ...
+    ) -> GLib.Variant:
+        self.logger.info(f'Getting property "{property_name}"')
+        prop_info = self.info.lookup_property(property_name)
+        prop = self.properties[property_name]
+
+        return GLib.Variant(prop_info.signature, prop.value)
 
     def property_set(
         self,
@@ -70,7 +82,21 @@ class Service:
         interface_name: str,
         property_name: str,
         value: GLib.Variant,
-    ) -> bool: ...    
+    ) -> bool:
+        self.logger.info(f'Setting property "{property_name}" to {value.unpack()}')
+        prop_info = self.info.lookup_property(property_name)
+        
+        if prop_info.flags != Gio.DBusPropertyInfoFlags.WRITABLE:
+            self.logger.info("Property defined as read-only")
+            return False
+        
+        self.properties[property_name] = value.unpack()
+        return True
+
+class Property:
+    def __init__(self, value):
+        self.value = value
+
 
 class method:
     def __init__(self, pass_invocation: bool = False):
@@ -85,6 +111,7 @@ class method:
         wrapper.__dict__["pass_invocation"] = self.pass_invocation
 
         return wrapper
+
 
 # def method(pass_invocation: bool = False):
 #     def layer(func):

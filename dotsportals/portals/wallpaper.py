@@ -12,8 +12,8 @@ from .portal import Portal
 class WallpaperPortal(Portal):
     NAME = "org.freedesktop.impl.portal.Wallpaper"
 
-    def __init__(self, conn: Gio.DBusConnection):
-        super().__init__(conn)
+    def __init__(self, conn: Gio.DBusConnection, info):
+        super().__init__(conn, info)
 
         self.logger = logging.getLogger("WallpaperPortal")
 
