@@ -1,10 +1,12 @@
 import logging
+from collections.abc import Callable
 
-from gi.repository import Gio, GObject
+from gi.repository import Gio, GLib, GObject
 
+from ..quickshell import call, wait_for_signal
 from ..service import Service
-from ..utils import load_iface
-from .request import RequestFactory
+from ..utils import load_iface, ret_variant, return_with_error
+from .request import Request, RequestFactory
 
 
 class Portal(Service):
@@ -14,6 +16,36 @@ class Portal(Service):
         self.rq = RequestFactory(self.NAME, conn)
 
         super().__init__(info)
+
+    def call_and_wait(
+        self,
+        req: Request,
+        invocation: Gio.DBusMethodInvocation,
+        callback: Callable[[bool], tuple],
+        target: str,
+        function: str,
+        *args,
+    ):
+        """
+        Calls a quickshell function, waits for its finished signal, and then handles errors, decodes the output and calls the callback with a dismissed argument.
+        Finishes request when done calling callback or on an exception.
+        """
+
+        def finish_cb(out: GLib.Bytes, error: Exception, _):
+            if error is not None:
+                return return_with_error(invocation, req, error)
+
+            dismissed = out.get_data().decode().strip() == "true"
+            val = callback(dismissed)
+            invocation.return_value(ret_variant(invocation, val))
+
+            req.finish()
+
+        call(target, function, *args, cancellable=req.cancellable)
+        wait_for_signal(
+            target, "finished", callback=finish_cb, cancellable=req.cancellable
+        )
+
 
 class DotsPortals(GObject.Object):
     def __init__(self):
