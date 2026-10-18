@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 
 from gi.repository import GLib
 from rich.logging import RichHandler

@@ -1,7 +1,7 @@
 import logging
 import typing
 
-from gi.repository import Gio, GLib, GObject
+from gi.repository import Gio, GObject
 
 from ..service import Service, method
 from ..utils import load_iface
