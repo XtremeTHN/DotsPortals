@@ -6,8 +6,8 @@ from .portals.errors import PortalException
 
 
 class Service:
-    methods: dict = {}
-    properties: dict[str, "Property"] = {}
+    methods: dict
+    properties: dict[str, "Property"]
     info: Gio.DBusInterfaceInfo
 
     def __init__(self, info):
@@ -15,6 +15,9 @@ class Service:
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
+        cls.methods = {}
+        cls.properties = {}
+        cls.info = None
 
         for name, value in cls.__dict__.items():
             if callable(value) and value.__dict__.get("portal_method", False):
