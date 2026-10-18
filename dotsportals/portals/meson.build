@@ -5,7 +5,8 @@ modules_sources = [
     'errors.py',
     'portal.py',
     'request.py',
-    'wallpaper.py'
+    'wallpaper.py',
+    'usb.py'
 ]
 
 install_data(modules_sources, install_dir: moduledir)

@@ -2,6 +2,7 @@ from gi.repository import GLib
 
 from .logger import init_logger
 from .portals.portal import DotsPortals
+from .portals.usb import UsbPortal
 from .portals.wallpaper import WallpaperPortal
 
 
@@ -14,6 +15,7 @@ class App:
     def activate(self):
         self.service = DotsPortals()
         self.service.add_portal(WallpaperPortal)
+        self.service.add_portal(UsbPortal)
         self.service.own()
 
     def run(self):
