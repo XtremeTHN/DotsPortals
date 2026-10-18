@@ -26,10 +26,12 @@ def exec_with_output(logger: object, cmd: list, callback, cancellable=None):
                 logger.error(f"Failed to communicate with {cmd[0]}")
                 logger.error(f"stderr: {stderr}")
                 logger.error(f"stdout: {stdout}")
-            callback(stdout, None, cancellable)
+            if callback is not None:
+                callback(stdout, None, cancellable)
         except Exception as e:
             logger.exception("Failed to finish quickshell call", exc_info=e)
-            callback(None, e, cancellable)
+            if callback is not None:
+                callback(None, e, cancellable)
 
     proc = Gio.Subprocess.new(cmd, Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE)
     proc.communicate_async(None, cancellable, cb)
