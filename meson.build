@@ -5,3 +5,4 @@ project(
 )
 
 subdir('dotsportals')
+subdir('data')

@@ -12,7 +12,7 @@ configure_file(
     output: 'xdg-desktop-portal-dotsportals',
     configuration: conf,
     install: true,
-    install_dir: get_option('bindir'),
+    install_dir: get_option('prefix') / get_option('libexecdir'),
     install_mode: 'r-xr-xr-x'
 )
 
