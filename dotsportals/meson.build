@@ -28,3 +28,4 @@ svgtheme_sources = [
 install_data(svgtheme_sources, install_dir: moduledir)
 
 subdir('portals')
+subdir('ipc')

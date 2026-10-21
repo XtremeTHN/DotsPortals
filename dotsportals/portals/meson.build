@@ -7,7 +7,8 @@ modules_sources = [
     'request.py',
     'wallpaper.py',
     'usb.py',
-    'screenshot.py'
+    'screenshot.py',
+    'background.py'
 ]
 
 install_data(modules_sources, install_dir: moduledir)

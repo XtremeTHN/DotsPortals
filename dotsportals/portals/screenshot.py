@@ -30,8 +30,8 @@ class ScreenshotPortal(Portal):
         int(Target.SCREEN | Target.WINDOW | Target.AREA | Target.ACTIVEWINDOW)
     )  # all targets
 
-    def __init__(self, conn, info):
-        super().__init__(conn, info)
+    def __init__(self, conn):
+        super().__init__(conn)
         self.logger = logging.getLogger("ScreenshotPortal")
 
     @method(pass_invocation=True)

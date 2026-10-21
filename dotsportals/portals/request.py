@@ -8,10 +8,11 @@ from ..utils import load_iface
 
 
 class Request(GObject.Object, Service):
+    NAME = "org.freedesktop.impl.portal.Request"
+    
     def __init__(self, logger, handle: str, connection: Gio.DBusConnection):
-        iface = load_iface("org.freedesktop.impl.portal.Request")
         GObject.Object.__init__(self)
-        Service.__init__(self, iface)
+        Service.__init__(self, connection)
 
         self.handle = handle
         self.conn = connection
@@ -22,7 +23,7 @@ class Request(GObject.Object, Service):
 
         self.id = connection.register_object(
             handle,
-            iface,
+            self.info,
             self.method_handler,
         )
         self.logger.info(f"Registered request on {handle}")

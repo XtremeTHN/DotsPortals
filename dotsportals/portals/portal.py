@@ -10,12 +10,9 @@ from .request import Request, RequestFactory
 
 
 class Portal(Service):
-    NAME: str
-
-    def __init__(self, conn: Gio.DBusConnection, info: Gio.DBusInterfaceInfo):
+    def __init__(self, conn: Gio.DBusConnection):
         self.rq = RequestFactory(self.NAME, conn)
-
-        super().__init__(info)
+        super().__init__(conn)
 
     def call_and_wait(
         self,
@@ -59,6 +56,9 @@ class DotsPortals(GObject.Object):
     def add_portal(self, portal: Portal):
         self.portals_types[portal.NAME] = portal
 
+    def get_portal(self, name: str) -> Portal:
+        return self.portals_instances[name]
+
     def unown(self):
         Gio.bus_unown_name(self.bus_id)
         self.logger.info("Unowned service")
@@ -78,14 +78,12 @@ class DotsPortals(GObject.Object):
     def bus_acquired(self, conn: Gio.DBusConnection, name: str):
         for iface, portal in self.portals_types.items():
             self.logger.info(f'Registering portal "{iface}"...')
-            info = load_iface(iface)
-
-            p: Portal = portal(conn, info)
+            p: Portal = portal(conn)
             self.portals_instances[iface] = p
 
             conn.register_object(
                 "/org/freedesktop/portal/desktop",
-                info,
+                p.info,
                 p.method_handler,
                 p.property_get,
                 p.property_set,

@@ -12,8 +12,8 @@ class UsbPortal(Portal):
     NAME = "org.freedesktop.impl.portal.Usb"
     version = Property(1)
 
-    def __init__(self, conn: Gio.DBusConnection, info):
-        super().__init__(conn, info)
+    def __init__(self, conn: Gio.DBusConnection):
+        super().__init__(conn)
 
         self.logger = logging.getLogger("UsbPortal")
 

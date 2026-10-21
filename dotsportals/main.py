@@ -1,6 +1,7 @@
 from gi.repository import GLib
 
 from .logger import init_logger
+from .portals.background import BackgroundPortal
 from .portals.portal import DotsPortals
 from .portals.screenshot import ScreenshotPortal
 from .portals.usb import UsbPortal
@@ -18,7 +19,15 @@ class App:
         self.service.add_portal(WallpaperPortal)
         self.service.add_portal(UsbPortal)
         self.service.add_portal(ScreenshotPortal)
+        self.service.add_portal(BackgroundPortal)
         self.service.own()
+
+    def deactivate(self):
+        self.service.unown()
+
+        back: BackgroundPortal = self.service.get_portal(BackgroundPortal.NAME)
+        if back is not None:
+            back.ipc.cancellable.cancel()
 
     def run(self):
         GLib.idle_add(self.activate)
@@ -28,7 +37,7 @@ class App:
         except (KeyboardInterrupt, EOFError):
             pass
         finally:
-            self.service.unown()
+            self.deactivate()
 
 
 def run():

@@ -2,16 +2,20 @@ import functools
 
 from gi.repository import Gio, GLib
 
+from .utils import load_iface
 from .portals.errors import PortalException
 
 
 class Service:
+    NAME: str
+
     methods: dict
     properties: dict[str, "Property"]
     info: Gio.DBusInterfaceInfo
 
-    def __init__(self, info):
-        self.info = info
+    def __init__(self, conn: Gio.DBusConnection):
+        self.info = load_iface(self.NAME)
+        self.conn = conn
 
     def __init_subclass__(cls, **kwargs) -> None:
         super().__init_subclass__(**kwargs)
@@ -25,6 +29,14 @@ class Service:
 
             if isinstance(value, Property):
                 cls.properties[name] = value
+
+    def emit(self, name: str):
+        self.conn.emit_signal(
+            "org.freedesktop.impl.portal.desktop.dotsportals",
+            "/org/freedesktop/portal/desktop",
+            self.NAME,
+            name
+        )
 
     def method_handler(
         self,
