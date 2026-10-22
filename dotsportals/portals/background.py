@@ -53,7 +53,6 @@ class BackgroundPortal(Portal):
         if self.last_state == {} and self.state == {}:
             return
 
-        self.logger.info(self.state)
         self.emit("RunningApplicationsChanged")
 
     @method()
