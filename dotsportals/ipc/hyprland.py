@@ -2,42 +2,17 @@ import json
 import logging
 import os
 import socket
-import threading
-from typing import ClassVar, TypedDict
 
-from gi.repository import Gio, GLib, GObject
+from gi.repository import GLib
 
-from ..utils import get_signal_args
-
-Window = TypedDict(
-    "Window",
-    {
-        "info": GLib.KeyFile,
-        "address": str,
-        "class": str,
-        "mapped": bool,
-        "hidden": bool,
-        "visible": bool,
-        "pid": int,
-    },
-)
+from .ipc import Ipc
 
 
-class HyprlandIpc(GObject.Object):
-    __gsignals__: ClassVar = {"windows-changed": get_signal_args()}
-
-    windows: dict[str, list[Window]]
-    active_window: Window
-
+class HyprlandIpc(Ipc):
     def __init__(self):
         super().__init__()
 
-        self.windows = {}
-        self.active_window = {}
-
         self.logger = logging.getLogger("HyprlandIpc")
-        self.cancellable = Gio.Cancellable.new()
-        self.thread = threading.Thread(target=self.run)
 
         runtime_dir = os.getenv("XDG_RUNTIME_DIR")
         sig = os.getenv("HYPRLAND_INSTANCE_SIGNATURE")
@@ -45,9 +20,6 @@ class HyprlandIpc(GObject.Object):
 
         self.socket_path = os.path.join(hyprland_path, ".socket.sock")
         self.events_socket_path = os.path.join(hyprland_path, ".socket2.sock")
-
-    def start(self):
-        self.thread.start()
 
     def exec(self, command: str):
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -66,24 +38,6 @@ class HyprlandIpc(GObject.Object):
         sock.close()
         return json.loads(buffer)
 
-    def get_flatpak_info(self, pid: int):
-        proc = f"/proc/{pid}/root/.flatpak-info"
-        if os.path.exists(proc):
-            key = GLib.KeyFile.new()
-            key.load_from_file(proc, GLib.KeyFileFlags.NONE)
-
-            return key
-
-        return None
-
-    def embed_info(self, window: Window):
-        info = self.get_flatpak_info(window["pid"])
-        if info is None:
-            return
-        
-        window["info"] = info
-        return window
-
     def __refresh_windows(self):
         windows = {}
         hypr_windows = self.exec("clients")
@@ -100,18 +54,13 @@ class HyprlandIpc(GObject.Object):
 
         self.windows = windows
 
-    def run(self):
-        address = Gio.UnixSocketAddress.new(self.events_socket_path)
-        sock = Gio.SocketClient.new()
-        conn = sock.connect(address, self.cancellable)
-
-        stream = conn.get_input_stream()
-
-        self.event_socket_stream = Gio.DataInputStream.new(stream)
-
+    def init(self):
+        sock = self.get_socket(self.events_socket_path)
+        self.event_socket_stream = self.get_input_stream(sock)
         self.__refresh_windows()
         self.emit("windows-changed")
 
+    def poll(self):
         while not self.cancellable.is_cancelled():
             try:
                 (event, _) = self.event_socket_stream.read_line(self.cancellable)
@@ -126,7 +75,7 @@ class HyprlandIpc(GObject.Object):
                 self.active_window = {}
                 active_class = data.decode().split(",", 1)[0]
 
-                for address, windows in self.windows.items():
+                for windows in self.windows.values():
                     for x in windows:
                         if x["class"] != active_class:
                             continue

@@ -3,9 +3,9 @@ from enum import IntEnum
 
 from gi.repository import Gio, GLib
 
-from ..ipc.hyprland import HyprlandIpc
-from ..service import Property, method
-from ..utils import ret_variant, return_with_error, variant
+from ..ipc.util import get_current_ipc
+from ..service import method
+from ..utils import variant
 from .portal import Portal
 
 
@@ -27,12 +27,14 @@ class BackgroundPortal(Portal):
     def __init__(self, conn):
         super().__init__(conn)
         self.state: dict[str, GLib.Variant] = {}
+        self.last_state = {}
         self.logger = logging.getLogger("BackgroundPortal")
-        self.ipc = HyprlandIpc()
+        self.ipc = get_current_ipc()
         self.ipc.connect("windows-changed", self.on_windows_changed)
         self.ipc.start()
 
     def on_windows_changed(self, _):
+        self.last_state = self.state
         self.state = {}
 
         active_address = self.ipc.active_window.get("address", "")
@@ -48,6 +50,10 @@ class BackgroundPortal(Portal):
                 "u", state
             )
 
+        if self.last_state == {} and self.state == {}:
+            return
+
+        self.logger.info(self.state)
         self.emit("RunningApplicationsChanged")
 
     @method()
