@@ -6,6 +6,7 @@ from .portals.portal import DotsPortals
 from .portals.screenshot import ScreenshotPortal
 from .portals.usb import UsbPortal
 from .portals.wallpaper import WallpaperPortal
+from .portals.access import AccessPortal
 
 
 class App:
@@ -20,6 +21,7 @@ class App:
         self.service.add_portal(UsbPortal)
         self.service.add_portal(ScreenshotPortal)
         self.service.add_portal(BackgroundPortal)
+        self.service.add_portal(AccessPortal)
         self.service.own()
 
     def deactivate(self):
