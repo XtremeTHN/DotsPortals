@@ -9,6 +9,11 @@ from .portals.errors import Failed
 INTERFACES_PATH = Path("/usr/share/dbus-1/interfaces/")
 
 
+class FailedQsCall(Exception):
+    def __init__(self, code: int, *args):
+        self.code = code
+        super().__init__(*args)
+
 def load_iface(iface: str) -> Gio.DBusNodeInfo:
     return Gio.DBusNodeInfo.new_for_xml(
         (INTERFACES_PATH / f"{iface}.xml").read_text()
@@ -28,10 +33,10 @@ def exec_with_output(logger: object, cmd: list, callback, cancellable=None):
             (_, stdout, stderr) = p.communicate_finish(res)
             if p.get_exit_status() > 0:
                 logger.error(f"Failed to communicate with {cmd[0]}")
-                logger.error(f"stderr: {stderr}")
-                logger.error(f"stdout: {stdout}")
+                logger.error(f"stderr: {stderr.get_data().decode(errors="ignore")}")
+                logger.error(f"stdout: {stdout.get_data().decode(errors="ignore")}")
             if callback is not None:
-                callback(stdout, None, cancellable)
+                callback(stdout, FailedQsCall(p.get_exit_status()), cancellable)
         except Exception as e:
             logger.exception("Failed to finish quickshell call", exc_info=e)
             if callback is not None:

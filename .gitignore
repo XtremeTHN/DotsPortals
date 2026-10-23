@@ -1,6 +1,7 @@
 /target
 installation
 build
+buildRoot
 .venv
 .ruff_cache
 __pycache__
