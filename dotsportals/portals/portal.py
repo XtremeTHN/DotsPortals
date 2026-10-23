@@ -1,3 +1,4 @@
+import json
 import logging
 from collections.abc import Callable
 
@@ -22,6 +23,7 @@ class Portal(Service):
         target: str,
         function: str,
         *args,
+        _json=False,
     ):
         """
         Calls a quickshell function, waits for its finished signal, and then handles errors, decodes the output and calls the callback with a dismissed argument.
@@ -32,8 +34,15 @@ class Portal(Service):
             if error is not None:
                 return return_with_error(invocation, req, error)
 
-            dismissed = out.get_data().decode().strip() == "true"
-            val = callback(dismissed)
+            data = out.get_data()
+
+            _in = None
+            if _json:
+                _in = json.loads(data)
+            else:
+                _in = data.decode().strip() == "true"
+                
+            val = callback(_in)
             invocation.return_value(ret_variant(invocation, val))
 
             req.finish()
