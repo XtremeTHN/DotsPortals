@@ -41,7 +41,7 @@ class Portal(Service):
                 _in = json.loads(data)
             else:
                 _in = data.decode().strip() == "true"
-                
+
             val = callback(_in)
             invocation.return_value(ret_variant(invocation, val))
 

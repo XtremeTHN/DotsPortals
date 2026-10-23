@@ -31,12 +31,15 @@ def exec_with_output(logger: object, cmd: list, callback, cancellable=None):
     def cb(p: Gio.Subprocess, res):
         try:
             (_, stdout, stderr) = p.communicate_finish(res)
+            exception = None
             if p.get_exit_status() > 0:
                 logger.error(f"Failed to communicate with {cmd[0]}")
                 logger.error(f"stderr: {stderr.get_data().decode(errors="ignore")}")
                 logger.error(f"stdout: {stdout.get_data().decode(errors="ignore")}")
+                exception = FailedQsCall(p.get_exit_status())
+
             if callback is not None:
-                callback(stdout, FailedQsCall(p.get_exit_status()), cancellable)
+                callback(stdout, exception, cancellable)
         except Exception as e:
             logger.exception("Failed to finish quickshell call", exc_info=e)
             if callback is not None:
